@@ -1,0 +1,19 @@
+{
+  "name": "sanotto/atk-attribute-cuit",
+  "description": "Un atributo de tipo cUIT para ATK9",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "framework",
+    "skeleton",
+    "atk",
+    "search"
+  ],
+  "require": {
+    "php": ">=5.5.9",
+    "sintattica/atk": "9.0.x-dev"
+  },
+ "autoload": {
+    "psr-4": {"Sintattica\\Atk\\": "src/"}
+  }
+}
