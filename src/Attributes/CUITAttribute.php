@@ -124,6 +124,4 @@ class CUITAttribute extends Attribute
 		$value= Tools::atkArrayNvl($rec, $this->fieldName());
         return $value; 
     }
-    /**
-     * Converts a database value to an internal value.
-
+}
