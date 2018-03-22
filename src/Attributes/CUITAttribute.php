@@ -1,8 +1,11 @@
 <?php
+
 namespace Sintattica\Atk\Attributes;
+
 use Sintattica\Atk\Core\Tools;
 use Sintattica\Atk\Core\Language;
 use Sintattica\Atk\Utils\IpUtils;
+
 /**
  * The CUIT  attribute provides a widget to edit CUIT's in atk9
  *
@@ -10,6 +13,7 @@ use Sintattica\Atk\Utils\IpUtils;
  */
 class CUITAttribute extends Attribute
 {
+
     /**
      * Constructor.
      *
@@ -18,8 +22,8 @@ class CUITAttribute extends Attribute
      */
     public function __construct($name, $flags = 0)
     {
-		parent::__construct($name, $flags);
-		$this->setAttribSize(11);
+        parent::__construct($name, $flags);
+        $this->setAttribSize(11);
     }
 
     /**
@@ -30,14 +34,16 @@ class CUITAttribute extends Attribute
      * @return string fetched value
      */
     public function fetchValue($postvars)
-	{
-		$value = parent::fetchValue($postvars);
-		return $value;
+    {
+        $value = self::fetchValue($postvars);
+        return $value;
     }
+
     public function edit($record, $fieldprefix, $mode)
     {
         return parent::edit($record, $fieldprefix, $mode);
     }
+
     /**
      * Checks if the value is a valid YearMonth value.
      *
@@ -51,67 +57,98 @@ class CUITAttribute extends Attribute
     {
         // Check for valid ip string
         $strvalue = Tools::atkArrayNvl($record, $this->fieldName(), '');
-        if ($strvalue != '' && $strvalue != '...') 
-		{
- 		    if(!$this::isValidCUIT($strvalue))
-			{
+        if ($strvalue != '' && $strvalue != '...') {
+            if (!$this::isValidCUIT($strvalue)) {
                 Tools::triggerError($record, $this->fieldName(), 'CUIT No v&aacute;lido');
-			}
+            }
         }
         parent::validate($record, $mode);
     }
 
-	public static function isValidCUIT($cuit)
-	{
-		$coeficiente[0]=5;
-		$coeficiente[1]=4;
-		$coeficiente[2]=3;
-		$coeficiente[3]=2;
-		$coeficiente[4]=7;
-		$coeficiente[5]=6;
-		$coeficiente[6]=5;
-		$coeficiente[7]=4;
-		$coeficiente[8]=3;
-		$coeficiente[9]=2;
- 
-		$resultado=1;
- 
-		for ($i=0; $i < strlen($cuit); $i= $i +1) 
-        {   
-            //separo cualquier caracter que no tenga que ver con numeros
-			if ((Ord(substr($cuit, $i, 1)) >= 48) && (Ord(substr($cuit, $i, 1)) <= 57))
-			{
-			    $cuit_rearmado = $cuit_rearmado . substr($cuit, $i, 1);
-            }	
-		}
-
-        if (strlen($cuit_rearmado) <> 11) 
-        {  
-            // si to estan todos los digitos
-			return false;
-		} 
-		else 
-		{
-			$sumador = 0;
-			$verificador = substr($cuit_rearmado, 10, 1); //tomo el digito verificador
- 			for ($i=0; $i <=9; $i=$i+1) 
-			{
-				$sumador = $sumador + (substr($cuit_rearmado, $i, 1)) * $coeficiente[$i];//separo cada digito y lo multiplico por el coeficiente
-			}
-
-			$resultado = $sumador % 11;
-			$resultado = 11 - $resultado;  //saco el digito verificador
-			$veri_nro = intval($verificador);
-
-			if ($veri_nro <> $resultado) 
-			{
-				return false;
-			} 
-			$cuit_rearmado = substr($cuit_rearmado, 0, 2) . "-" . substr($cuit_rearmado, 2, 8) . "-" . substr($cuit_rearmado, 10, 1);
-			return true;
-		}
-	}
     /**
+     * Validates if the given CUIT is valid.
+     *
+     * @param string $cuit The CUIT to validate.
+     * @return bool True if the CUIT is valid.
+     */
+ 	public static function isValidCUIT($cuit)
+	{
+		if(!( $cuit = self::normalizeCUIT($cuit))){
+			return false;
+		}
+		$acumulado = 0;
+		$digitos = str_split( $cuit );
+        $digito = end($digitos);
+        
+        $verif = self::calcVerifyDigit($cuit);
+		return ($digito == $verif);
+    }
+
+    /**
+     * Calculate the Verification digit of a given CUIT.
+     *
+     * @param string $cuit The CUIT to validate.
+     * @return int $verif The verification digit, 10 implies invalid digit.
+     */
+ 	public static function calcVerifyDigit($cuit)
+	{
+		if(!( $cuit = self::normalizeCUIT($cuit))){
+			return 10;
+        }
+		$acumulado = 0;
+		$digitos = str_split( $cuit );
+		$digito = array_pop( $digitos );
+
+        for( $i = 0; $i < count( $digitos ); $i++ ){
+            $mult = ( 2 + ( $i % 6 ) );
+            $d = $digitos[ 9 - $i ];
+			$acumulado += $digitos[ 9 - $i ] * ( 2 + ( $i % 6 ) );
+		}
+		$verif = 11 - ( $acumulado % 11 );
+        $verif = $verif == 11? 0 : $verif;
+		return $verif;
+	}
+ 
+
+    /**
+     * Calculate the cuit for a given DNI number and sex. 
+     *
+     * @param string $dni  The DNI number
+     * @param string $sexo The sex as 'M','F' 
+     */
+    public static function calculateCUIL($dni, $sexo)
+    {
+		$prefix = '20';
+		if ($sexo == 'F'){
+			$prefix = '27';
+		}
+		$cuit = $prefix.$dni.'0';
+		$digit = self::calcVerifyDigit($cuit);
+		if ($digit <> 10){
+			return $prefix.$dni.$digit;
+		}
+		$cuit = '23'.$dni.'0';	
+		$digit = self::calcVerifyDigit($cuit);
+		return  '23'.$dni.$digit;
+	}
+
+   	/**
+	 * Returns only the digits of the CUIT number striping all
+     * non digits chars.
+     * @param string $cuit The CUIT to normalize,
+     * @return variant The normalized CUIT or false if can not
+     *                 be normalized..
+ 	 */
+	public static function normalizeCUIT($cuit)
+	{
+		$cuit = preg_replace( '/[^\d]/', '', (string) $cuit );
+		if( strlen( $cuit ) != 11 ){
+			return false;
+		}
+		return $cuit;
+	}
+ 
+	/**
      * Converts the internal attribute value to one that is understood by the
      * database.
      *
@@ -120,8 +157,8 @@ class CUITAttribute extends Attribute
      * @return string The database compatible value
      */
     public function value2db($rec)
-	{
-		$value= Tools::atkArrayNvl($rec, $this->fieldName());
-        return $value; 
+    {
+        $value = Tools::atkArrayNvl($rec, $this->fieldName());
+        return $value;
     }
 }
