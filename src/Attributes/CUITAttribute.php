@@ -35,7 +35,7 @@ class CUITAttribute extends Attribute
      */
     public function fetchValue($postvars)
     {
-        $value = self::fetchValue($postvars);
+        $value = parent::fetchValue($postvars);
         return $value;
     }
 
