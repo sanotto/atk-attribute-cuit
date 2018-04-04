@@ -118,10 +118,20 @@ class CUITAttribute extends Attribute
      */
     public static function calculateCUIL($dni, $sexo)
     {
-		$prefix = '20';
-		if ($sexo == 'F'){
-			$prefix = '27';
-		}
+        switch($sexo){
+            case 'F':
+                $prefix='27';
+                break;
+            case 'M':
+                $prefix='20';
+                break;
+            case 'J':
+                $prefix='30';
+                break;
+            default:
+                return null;
+
+        }
 		$cuit = $prefix.$dni.'0';
 		$digit = self::calcVerifyDigit($cuit);
 		if ($digit <> 10){

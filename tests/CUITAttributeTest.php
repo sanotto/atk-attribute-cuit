@@ -63,6 +63,12 @@ final class CUITAttributeTest extends TestCase
             'CalculateCUIL returned incorrect CUIL'
         );
     }
+    public function testCalculateCUIT()
+    {
+        $this->assertEquals(Cuit::CalculateCUIL('56363838', 'J'),'30563638385',
+            'CalculateCUIL returned incorrect CUIT'
+        );
+    }
  
     public function testValidCUILWith23PrefixIsValid()
     {
